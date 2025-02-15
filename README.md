@@ -1,36 +1,5 @@
 ```c4
 # Contexto (Nível 1)
-System_Boundary("E-commerce System", "Plataforma de E-commerce") {
-    Person("Cliente", "Usuário que navega, adiciona produtos ao carrinho e finaliza compras.")
-    Person("Administrador", "Usuário que gerencia produtos, pedidos e clientes.")
-    System("Gateway de Pagamento", "Serviço terceirizado para processar pagamentos.")
-    System("Serviço de Notificação", "Envia emails e notificações para clientes.")
-}
-
-# Contêiner (Nível 2)
-System_Boundary("E-commerce System") {
-    Container("Web App", "React", "Interface do usuário para clientes e administradores.")
-    Container("API Backend", "Node.js + Express", "Lida com lógica de negócio e comunicação com o banco de dados.")
-    Container("Banco de Dados", "PostgreSQL", "Armazena dados dos produtos, pedidos e clientes.")
-    Container_Ext("Gateway de Pagamento", "Stripe/PayPal", "Processa pagamentos online.")
-    Container("Serviço de Notificação", "Node.js + Firebase", "Gerencia envio de emails e notificações push.")
-}
-
-# Componentes (Nível 3)
-Container_Boundary("API Backend") {
-    Component("Auth Service", "JWT", "Gerencia autenticação e autorização de usuários.")
-    Component("Product Service", "Node.js", "Gerencia listagem e detalhes dos produtos.")
-    Component("Order Service", "Node.js", "Gerencia pedidos e processos de checkout.")
-    Component_Ext("Payment Service", "Stripe SDK", "Interage com o Gateway de Pagamento para processar transações.")
-    Component("Cart Service", "Redis", "Gerencia o carrinho de compras de forma rápida e eficiente.")
-    Component("Notification Service", "Firebase SDK", "Envia emails e notificações push para os clientes.")
-}
-```
-
-
-
-```c4
-# Contexto (Nível 1)
 System_Boundary("E-commerce System", "Plataforma de E-commerce baseada em Microserviços") 
 {
     Person("Cliente", "Usuário que navega, adiciona produtos ao carrinho e finaliza compras.")
