@@ -1,21 +1,23 @@
-# ADR: Arquitetura do Order Service
+# **ADR: Arquitetura do Order Service**
 
-## Data: 15/02/2025
+📌 **Data**: 22/02/2025  
+📌 **Status**: Aprovado  
+📌 **Autor**: Clever Santoro Lopes
 
-## Status: Aprovado
+---
 
-## Autores: Equipe de Arquitetura
+## **1. Contexto**
 
-### 1. Contexto
+O **Order Service** é um dos principais microserviços do e-commerce, responsável pelo processamento de pedidos. Ele precisa garantir:
 
-O Order Service é um dos principais microserviços do e-commerce, responsável pelo processamento de pedidos. Ele precisa garantir:
+ - ✅ Consistência transacional entre pagamento, estoque e envio.     
+ - ✅ Alta disponibilidade e escalabilidade para lidar com picos de tráfego.
+ - ✅ Baixa latência para proporcionar uma boa experiência ao usuário.
+ - ✅ Tolerância a falhas para evitar pedidos incorretos ou duplicados.
 
-- ✅ Consistência transacional entre pagamento, estoque e envio.
-- ✅ Alta disponibilidade e escalabilidade para lidar com picos de tráfego.
-- ✅ Baixa latência para proporcionar uma boa experiência ao usuário.
-- ✅ Tolerância a falhas para evitar pedidos incorretos ou duplicados.
+---
 
-### 2. Decisão
+## **2. Decisão**
 
 Optamos por uma arquitetura baseada em microserviços utilizando as seguintes tecnologias e padrões:
 
@@ -39,7 +41,9 @@ O serviço segue um design orientado a eventos, garantindo que pedidos sejam pro
 4. Validação de Estoque → Usa Inventory Client para verificar disponibilidade.
 5. Geração de Eventos → Usa Kafka/RabbitMQ para processar pedidos assincronamente.
 
-### 3. Alternativas Consideradas
+---
+
+## **3. Alternativas Consideradas**
 
 #### 3.1 Processamento Síncrono
 
@@ -53,7 +57,9 @@ O serviço segue um design orientado a eventos, garantindo que pedidos sejam pro
 
 - ✅ Aprovado – Permite processamento assíncrono, escalabilidade e maior resiliência.
 
-### 4. Consequências
+---
+
+## **4. Consequências**
 
 #### Benefícios
 
@@ -66,12 +72,16 @@ O serviço segue um design orientado a eventos, garantindo que pedidos sejam pro
 - ⚠ Maior complexidade operacional → Requer monitoramento avançado e mecanismos de retry.
 - ⚠ Gestão de consistência eventual → Sincronização de eventos pode ser desafiadora.
 
-### 5. Próximos Passos
+---
+
+## **5. Próximos Passos**
 
 - 🚀 Implementação de SAGA Pattern para garantir consistência entre serviços.
 - 🔍 Monitoramento com OpenTelemetry para rastrear transações distribuídas.
 - 📈 Testes de carga para validar a escalabilidade do serviço.
 
-### Conclusão
+---
+
+## **Conclusão**
 
 Essa arquitetura garante que o Order Service seja confiável, escalável e resiliente, suportando o crescimento do e-commerce da startup.

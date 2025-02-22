@@ -1,0 +1,234 @@
+📌 Modelo C4 - User Service (Microserviço do E-commerce)
+🔹 Nível 1: Diagrama de Contexto
+O User Service é um dos principais microserviços do e-commerce. Ele gerencia usuários, perfis e autenticação.
+
+📌 Principais elementos:
+
+Usuário Cliente → Registra-se e gerencia seus dados no sistema.
+Sistema de E-commerce → Plataforma central que usa o User Service para gerenciar perfis.
+Serviços Externos:
+Sistema de Autenticação (Auth0, Firebase, Keycloak)
+Banco de Dados de Usuários (PostgreSQL)
+📌 Diagrama do Contexto:
+
+lua
+Copiar
+Editar
++----------------------------+
+|   Cliente (Usuário)        |
++----------------------------+
+            |
+            v
++--------------------------------------+
+|          Sistema de E-commerce      |
+|--------------------------------------|
+| - Microserviços para pedidos,       |
+|   pagamentos e usuários.            |
++--------------------------------------+
+            |
+            v
++-------------------+
+|  User Service    |
++-------------------+
+        |
+        v
++---------------------------+
+|  Banco de Dados (Postgre) |
++---------------------------+
+🔹 Nível 2: Diagrama de Contêineres
+Aqui detalhamos os contêineres que compõem o User Service.
+
+📌 Principais Contêineres:
+
+Frontend Web (React/Next.js) → Interage com a API do User Service.
+API Gateway (NestJS / Spring Cloud Gateway) → Roteia as requisições para o User Service.
+User Service → Serviço responsável pelo gerenciamento de usuários.
+Banco de Dados (PostgreSQL) → Armazena os perfis de usuários.
+Autenticação Externa (Auth0, Firebase, Keycloak) → Gerencia login e autenticação.
+📌 Diagrama de Contêineres:
+
+lua
+Copiar
+Editar
++--------------------------------------+
+|         Sistema de E-commerce       |
+|--------------------------------------|
+|  +--------+   +-----------------+   |
+|  | WebApp |   | API Gateway      |   |
+|  +--------+   +-----------------+   |
+|      |              |               |
+|      v              v               |
+|  +------------+    +------------+   |
+|  | UserSvc    | -> | Auth System |  |
+|  +------------+    +------------+   |
+|          |                 |
+|          v                 v
+|  +------------+    +----------------+
+|  | PostgreSQL |    |  External Auth  |
+|  +------------+    +----------------+
++--------------------------------------+
+✅ Explicação:
+
+O Frontend Web faz chamadas ao API Gateway, que repassa as requisições ao User Service.
+O User Service interage com um banco PostgreSQL para armazenar os dados dos usuários.
+A autenticação pode ser feita através de Auth0, Firebase ou Keycloak.
+🔹 Nível 3: Diagrama de Componentes
+Agora, detalhamos os componentes internos do User Service.
+
+📌 Componentes:
+
+UserController → Expõe endpoints REST.
+UserService → Contém a lógica de negócios.
+UserRepository → Interage com o banco de dados.
+AuthClient → Se comunica com sistemas externos de autenticação.
+📌 Diagrama de Componentes:
+
+lua
+Copiar
+Editar
++------------------------+
+|      User Service      |
++------------------------+
+      |          |
+      v          v
++------------+  +------------+
+| UserCtrl   |->| UserSrv    |
++------------+  +------------+
+       |              |
+       v              v
++------------+   +------------+
+| UserRepo   |   | AuthClient |
++------------+   +------------+
+       |              |
+       v              v
++------------+   +------------+
+| PostgreSQL |   | Auth System |
++------------+   +------------+
+✅ Explicação:
+
+O UserController recebe as requisições HTTP.
+O UserService processa as regras de negócios.
+O UserRepository acessa o banco de dados.
+O AuthClient interage com o sistema externo de autenticação.
+🔹 Nível 4: Código
+Aqui está um exemplo real de implementação do User Service em Node.js (Express).
+
+📌 1️⃣ UserController.js
+
+javascript
+Copiar
+Editar
+const express = require("express");
+const UserService = require("../services/UserService");
+const router = express.Router();
+
+router.post("/users", async (req, res) => {
+    try {
+        const user = await UserService.createUser(req.body);
+        res.status(201).json(user);
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+});
+
+router.get("/users/:id", async (req, res) => {
+    try {
+        const user = await UserService.getUserById(req.params.id);
+        res.json(user);
+    } catch (err) {
+        res.status(404).json({ error: "Usuário não encontrado" });
+    }
+});
+
+module.exports = router;
+📌 2️⃣ UserService.js
+
+javascript
+Copiar
+Editar
+const UserRepository = require("../repositories/UserRepository");
+const AuthClient = require("../clients/AuthClient");
+
+class UserService {
+    static async createUser(userData) {
+        // Verifica se o usuário já existe
+        const existingUser = await UserRepository.findByEmail(userData.email);
+        if (existingUser) throw new Error("Usuário já cadastrado");
+
+        // Cria usuário no sistema externo de autenticação
+        const authUser = await AuthClient.createUser(userData);
+        if (!authUser) throw new Error("Erro ao criar usuário");
+
+        // Salva no banco de dados
+        return await UserRepository.create(userData);
+    }
+
+    static async getUserById(userId) {
+        return await UserRepository.findById(userId);
+    }
+}
+
+module.exports = UserService;
+📌 3️⃣ UserRepository.js
+
+javascript
+Copiar
+Editar
+const db = require("../config/database");
+
+class UserRepository {
+    static async create(userData) {
+        const { email, name } = userData;
+        const result = await db.query("INSERT INTO users (email, name) VALUES ($1, $2) RETURNING *", [email, name]);
+        return result.rows[0];
+    }
+
+    static async findById(userId) {
+        const result = await db.query("SELECT * FROM users WHERE id = $1", [userId]);
+        return result.rows[0];
+    }
+
+    static async findByEmail(email) {
+        const result = await db.query("SELECT * FROM users WHERE email = $1", [email]);
+        return result.rows[0];
+    }
+}
+
+module.exports = UserRepository;
+📌 4️⃣ AuthClient.js
+
+javascript
+Copiar
+Editar
+const axios = require("axios");
+
+class AuthClient {
+    static async createUser(user) {
+        try {
+            const response = await axios.post("http://authservice:4000/auth/register", {
+                email: user.email,
+                password: user.password
+            });
+            return response.data;
+        } catch (err) {
+            return null;
+        }
+    }
+}
+
+module.exports = AuthClient;
+🎯 Conclusão
+Agora temos um User Service completamente modelado segundo o Modelo C4, incluindo:
+✅ Nível 1 - Contexto → Mostra a interação do User Service com o sistema.
+✅ Nível 2 - Contêineres → Define as principais aplicações envolvidas.
+✅ Nível 3 - Componentes → Estrutura interna do User Service.
+✅ Nível 4 - Código → Implementação real em Node.js.
+
+🚀 Essa arquitetura permite escalabilidade, segurança e fácil manutenção para o gerenciamento de usuários no e-commerce!
+
+Se precisar de mais ajustes ou dúvidas, me avise! 😊
+
+
+
+
+
