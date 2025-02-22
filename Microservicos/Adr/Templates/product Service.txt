@@ -1,0 +1,132 @@
+# 📌 Modelo C4 - Product Service (E-commerce com Microserviços)
+
+## 🔹 Nível 1: Diagrama de Contexto
+
+### **Visão Geral**
+O **Product Service** faz parte do sistema de e-commerce e é responsável pelo gerenciamento de produtos. Ele interage com usuários, outros serviços internos e sistemas externos de catálogos e mecanismos de busca.
+
+### **Principais elementos:**
+- 🛍 **Usuário (Cliente):** Acessa o e-commerce para visualizar e comprar produtos.
+- 🛒 **E-commerce System:** Plataforma principal que orquestra pedidos, pagamentos e estoque.
+- 📦 **Product Service:** Microserviço responsável pelo catálogo de produtos.
+- 🔎 **Mecanismo de Busca:** Serviço externo para indexação e busca rápida de produtos.
+- 🔗 **Catálogo Externo:** API de fornecedores que disponibilizam produtos para integração.
+
+---
+## 🔹 Nível 2: Diagrama de Contêineres
+
+### **Contêineres do Product Service**
+- **Frontend Web (React/Next.js):** Interface para o usuário buscar produtos.
+- **API Gateway (NestJS ou Spring Cloud Gateway):** Controla as requisições e direciona para os serviços corretos.
+- **Product Service (NestJS ou Spring Boot):**
+  - Processa e armazena informações dos produtos.
+  - Expõe APIs para gerenciamento do catálogo.
+  - Indexa produtos no mecanismo de busca.
+- **Banco de Dados (PostgreSQL):** Armazena produtos, preços e descrições.
+- **Search Engine (Elasticsearch):** Permite buscas rápidas e eficientes.
+- **Catálogo Externo (Fornecedor API):** Fornece dados de produtos de terceiros.
+
+---
+## 🔹 Nível 3: Diagrama de Componentes
+
+Aqui detalhamos os componentes internos do **Product Service**.
+
+### **Componentes principais:**
+- **ProductController:** Interface HTTP para gerenciar produtos.
+- **ProductService:** Lógica de negócios e validações.
+- **ProductRepository:** Comunicação com o banco de dados PostgreSQL.
+- **CatalogIntegrationClient:** Comunicação com a API de catálogo externo.
+- **SearchEngineClient:** Interface para indexação no Elasticsearch.
+
+```
++-----------------------+
+|   ProductController  |
++-----------------------+
+           |
+           v
++-----------------------+
+|     ProductService   |
++-----------------------+
+  |          |         |
+  v          v         v
++-------------+  +-------------------+  +------------------+
+| ProductRepo |  | CatalogIntegration |  | SearchEngineCl  |
++-------------+  +-------------------+  +------------------+
+  |                           |                  |
+  v                           v                  v
++-------------+         +------------------+  +------------+
+| PostgreSQL  |         | External Catalog |  | Elasticsearch |
++-------------+         +------------------+  +------------+
+```
+
+---
+## 🔹 Nível 4: Código (Exemplo Simplificado)
+
+### **1️⃣ ProductController.js**
+```javascript
+const express = require("express");
+const ProductService = require("../services/ProductService");
+const router = express.Router();
+
+router.get("/products", async (req, res) => {
+    const products = await ProductService.getAllProducts();
+    res.json(products);
+});
+
+router.post("/products", async (req, res) => {
+    const product = await ProductService.createProduct(req.body);
+    res.status(201).json(product);
+});
+
+module.exports = router;
+```
+
+### **2️⃣ ProductService.js**
+```javascript
+const ProductRepository = require("../repositories/ProductRepository");
+const SearchEngineClient = require("../clients/SearchEngineClient");
+const CatalogIntegrationClient = require("../clients/CatalogIntegrationClient");
+
+class ProductService {
+    static async getAllProducts() {
+        return await ProductRepository.getAll();
+    }
+    
+    static async createProduct(productData) {
+        const product = await ProductRepository.create(productData);
+        await SearchEngineClient.indexProduct(product);
+        return product;
+    }
+}
+
+module.exports = ProductService;
+```
+
+### **3️⃣ ProductRepository.js**
+```javascript
+const db = require("../config/database");
+
+class ProductRepository {
+    static async getAll() {
+        return db("products").select("*");
+    }
+    
+    static async create(product) {
+        return db("products").insert(product).returning("*");
+    }
+}
+
+module.exports = ProductRepository;
+```
+
+---
+## 🎯 **Conclusão**
+
+Agora temos um **Modelo C4 completo** para o **Product Service** do e-commerce, incluindo:
+✅ **Nível 1 - Contexto** → Interação do serviço com o sistema e usuários.
+✅ **Nível 2 - Contêineres** → Componentes do serviço e suas interações.
+✅ **Nível 3 - Componentes** → Arquitetura interna do serviço.
+✅ **Nível 4 - Código** → Implementação simplificada do Product Service.
+
+🚀 Essa arquitetura modular permite escalabilidade e flexibilidade para a evolução do e-commerce!
+
